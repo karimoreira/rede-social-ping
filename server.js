@@ -521,7 +521,11 @@ app.get('/api/posts/:postId', (req, res) => {
                (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes_count,
                (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comments_count,
                CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END as isLiked,
-               CASE WHEN s.user_id IS NOT NULL THEN 1 ELSE 0 END as isShared
+               CASE WHEN s.user_id IS NOT NULL THEN 1 ELSE 0 END as isShared,
+               s.user_id as shared_by_user_id,
+               (SELECT username FROM users WHERE id = s.user_id) as shared_by_username,
+               (SELECT full_name FROM users WHERE id = s.user_id) as shared_by_full_name,
+               (SELECT avatar FROM users WHERE id = s.user_id) as shared_by_avatar
         FROM posts p
         JOIN users u ON p.user_id = u.id
         LEFT JOIN likes l ON p.id = l.post_id AND l.user_id = ?
@@ -529,7 +533,7 @@ app.get('/api/posts/:postId', (req, res) => {
         WHERE p.id = ?
     `
     
-    db.get(query, [currentUserId, currentUserId, postId], (err, post) => {
+    db.get(query, [currentUserId, currentUserId, postId], async (err, post) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar post' })
         }
@@ -537,11 +541,20 @@ app.get('/api/posts/:postId', (req, res) => {
         if (!post) {
             return res.status(404).json({ error: 'Post não encontrado' })
         }
+
+        const processedPost = await processPostImages(post)
+        
+        if (processedPost.user_avatar) {
+            processedPost.user_avatar = await processImageData(processedPost.user_avatar)
+        }
+        if (processedPost.shared_by_avatar) {
+            processedPost.shared_by_avatar = await processImageData(processedPost.shared_by_avatar)
+        }
         
         const formattedPost = {
-            ...post,
-            isLiked: post.isLiked === 1,
-            isShared: post.isShared === 1
+            ...processedPost,
+            isLiked: processedPost.isLiked === 1,
+            isShared: processedPost.isShared === 1
         }
         
         res.json(formattedPost)
@@ -721,7 +734,11 @@ app.get('/api/user/shares', requireAuth, (req, res) => {
         SELECT p.*, u.username, u.full_name, u.avatar,
                (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes_count,
                (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comments_count,
-               1 as isShared
+               1 as isShared,
+               s.user_id as shared_by_user_id,
+               (SELECT username FROM users WHERE id = s.user_id) as shared_by_username,
+               (SELECT full_name FROM users WHERE id = s.user_id) as shared_by_full_name,
+               (SELECT avatar FROM users WHERE id = s.user_id) as shared_by_avatar
         FROM posts p
         JOIN users u ON p.user_id = u.id
         JOIN shares s ON p.id = s.original_post_id
@@ -730,11 +747,30 @@ app.get('/api/user/shares', requireAuth, (req, res) => {
         LIMIT ? OFFSET ?
     `
     
-    db.all(query, [userId, limit, offset], (err, posts) => {
+    db.all(query, [userId, limit, offset], async (err, posts) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar posts compartilhados' })
         }
-        res.json(posts)
+        
+   
+        const processedPosts = []
+        for (const post of posts) {
+            const processedPost = await processPostImages(post)
+            
+
+            if (processedPost.avatar) {
+                processedPost.avatar = await processImageData(processedPost.avatar)
+            }
+            
+   
+            if (processedPost.shared_by_avatar) {
+                processedPost.shared_by_avatar = await processImageData(processedPost.shared_by_avatar)
+            }
+            
+            processedPosts.push(processedPost)
+        }
+        
+        res.json(processedPosts)
     })
 })
 
@@ -750,7 +786,6 @@ app.get('/api/user', async (req, res) => {
             return res.status(500).json({ error: 'Erro ao buscar usuário' })
         }
         
-        // Processar avatar automaticamente
         const processedUser = await processUserAvatar(user)
         
         res.json(processedUser)
@@ -761,7 +796,6 @@ app.put('/api/user', requireAuth, upload.single('avatar'), async (req, res) => {
     const { fullName, bio, removeAvatar } = req.body
     const userId = req.session.userId
     
-    // Otimizar e converter avatar para base64 se existir
     let avatarData = null
     if (req.file) {
         const optimizedAvatar = await optimizeImage(req.file.buffer, { 

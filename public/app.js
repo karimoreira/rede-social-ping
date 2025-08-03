@@ -1490,7 +1490,9 @@ async function showPostDetails(postId) {
             const likeIconClass = isLiked ? 'fas fa-heart' : 'far fa-heart';
             const likeBtnClass = isLiked ? 'post-action liked' : 'post-action';
             
-            const avatarUrl = post.avatar || post.user_avatar || (post.user && post.user.avatar);
+
+            const isReposted = post.isShared || post.isShared === 1;
+            const avatarUrl = isReposted && post.shared_by_avatar ? post.shared_by_avatar : (post.avatar || post.user_avatar || (post.user && post.user.avatar));
             
             const avatarHtml = avatarUrl 
                 ? `<img src="${avatarUrl}" alt="Avatar" class="post-details-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -1500,7 +1502,9 @@ async function showPostDetails(postId) {
                 : `<div class="post-details-avatar avatar-fallback">
                      <i class="fas fa-user"></i>
                    </div>`;
-
+            const displayName = isReposted && post.shared_by_full_name ? post.shared_by_full_name : (post.user_name || post.username);
+            const displayUsername = isReposted && post.shared_by_username ? post.shared_by_username : post.username;
+            
             showModal('detalhes do post', `
                 <div class="post-details">
                     <div class="post-details-header">
@@ -1508,8 +1512,8 @@ async function showPostDetails(postId) {
                             ${avatarHtml}
                         </div>
                         <div class="post-details-user-info">
-                            <h4>${post.user_name || post.username}</h4>
-                            <span>${formatTimeAgo(post.created_at)}</span>
+                            <h4>${displayName}</h4>
+                            <span>@${displayUsername} • ${formatTimeAgo(post.created_at)}</span>
                         </div>
                     </div>
                     <div class="post-details-content">${post.content}</div>
