@@ -34,3 +34,6 @@ sistema de seguidores
 # banco de dados
 tabelas: users, posts, likes, comments, followers
 o arquivo social.db será criado automaticamente na primeira execução do projeto
+
+# imagens migradas do /upload pós testes para o banco de dados
+agora armazeno as imagens diretamente no banco de dados SQLite como base64, mais simples, com backup, armazenamento seguro e sem depender de nada externo. para outros projetos maiores é melhor armazenar um S3 por exemplo e uma CDN de alta performance. neste projeto fiz uma otimização para as imagens com redimensionamento e conversão

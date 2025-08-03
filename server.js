@@ -5,6 +5,8 @@ const session = require('express-session')
 const multer = require('multer')
 const path = require('path')
 const cors = require('cors')
+const sharp = require('sharp')
+const fs = require('fs') 
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -25,7 +27,182 @@ function getCurrentLocalDateTime() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-app.use(express.json())
+// Função para otimizar imagem
+async function optimizeImage(buffer, options = {}) {
+    const {
+        maxWidth = 800,
+        maxHeight = 800,
+        quality = 80,
+        format = 'jpeg'
+    } = options
+
+    try {
+        let image = sharp(buffer)
+        
+        // Obter metadados da imagem
+        const metadata = await image.metadata()
+        
+        // Redimensionar se necessário
+        if (metadata.width > maxWidth || metadata.height > maxHeight) {
+            image = image.resize(maxWidth, maxHeight, {
+                fit: 'inside',
+                withoutEnlargement: true
+            })
+        }
+        
+        // Converter e comprimir
+        let optimizedBuffer
+        if (format === 'jpeg') {
+            optimizedBuffer = await image
+                .jpeg({ quality, progressive: true })
+                .toBuffer()
+        } else if (format === 'png') {
+            optimizedBuffer = await image
+                .png({ compressionLevel: 9, progressive: true })
+                .toBuffer()
+        } else if (format === 'webp') {
+            optimizedBuffer = await image
+                .webp({ quality, effort: 6 })
+                .toBuffer()
+        } else {
+            optimizedBuffer = await image
+                .jpeg({ quality, progressive: true })
+                .toBuffer()
+        }
+        
+        // Determinar MIME type
+        const mimeTypes = {
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'webp': 'image/webp'
+        }
+        
+        const mimeType = mimeTypes[format] || 'image/jpeg'
+        
+        return {
+            buffer: optimizedBuffer,
+            mimeType,
+            originalSize: buffer.length,
+            optimizedSize: optimizedBuffer.length,
+            compressionRatio: ((buffer.length - optimizedBuffer.length) / buffer.length * 100).toFixed(1)
+        }
+    } catch (error) {
+        console.error('Erro ao otimizar imagem:', error)
+        // Retornar imagem original se falhar
+        return {
+            buffer: buffer,
+            mimeType: 'image/jpeg',
+            originalSize: buffer.length,
+            optimizedSize: buffer.length,
+            compressionRatio: 0
+        }
+    }
+}
+
+// Função para detectar e converter imagens automaticamente
+async function processImageData(imageData) {
+    if (!imageData) return null
+    
+    // Se já é base64, retorna como está
+    if (imageData.startsWith('data:image/')) {
+        return imageData
+    }
+    
+    // Se é um caminho de arquivo (formato antigo), converte para base64
+    if (imageData.startsWith('/uploads/')) {
+        try {
+            const filePath = path.join(__dirname, 'public', imageData)
+            
+            // Verifica se o arquivo existe
+            if (!fs.existsSync(filePath)) {
+                console.warn(`Arquivo não encontrado: ${filePath}`)
+                return null
+            }
+            
+            const fileBuffer = fs.readFileSync(filePath)
+            const fileName = path.basename(filePath)
+            const ext = path.extname(fileName).toLowerCase()
+            
+            // Determinar MIME type baseado na extensão
+            const mimeTypes = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.gif': 'image/gif',
+                '.webp': 'image/webp'
+            }
+            
+            const mimeType = mimeTypes[ext] || 'image/jpeg'
+            
+            // Otimizar a imagem
+            const optimizedImage = await optimizeImage(fileBuffer, {
+                maxWidth: imageData.includes('avatar') ? 200 : 800,
+                maxHeight: imageData.includes('avatar') ? 200 : 800,
+                quality: imageData.includes('avatar') ? 85 : 80
+            })
+            
+            const base64Image = `data:${optimizedImage.mimeType};base64,${optimizedImage.buffer.toString('base64')}`
+            
+            console.log(`✅ Imagem convertida automaticamente: ${fileName}`)
+            console.log(`   Tamanho: ${optimizedImage.originalSize} → ${optimizedImage.optimizedSize} bytes (${optimizedImage.compressionRatio}% redução)`)
+            
+            // Deletar arquivo original após conversão
+            fs.unlinkSync(filePath)
+            console.log(`🗑️ Arquivo original deletado: ${filePath}`)
+            
+            return base64Image
+        } catch (error) {
+            console.error(`❌ Erro ao converter imagem ${imageData}:`, error.message)
+            return null
+        }
+    }
+    
+    return imageData
+}
+
+// Função para processar todas as imagens de um post
+async function processPostImages(post) {
+    if (post.image) {
+        const processedImage = await processImageData(post.image)
+        
+        // Se a imagem foi convertida (mudou de caminho para base64), atualizar no banco
+        if (processedImage && processedImage !== post.image && processedImage.startsWith('data:image/')) {
+            db.run('UPDATE posts SET image = ? WHERE id = ?', [processedImage, post.id], (err) => {
+                if (err) {
+                    console.error('Erro ao atualizar imagem do post no banco:', err)
+                } else {
+                    console.log(`✅ Imagem do post ${post.id} atualizada no banco`)
+                }
+            })
+        }
+        
+        post.image = processedImage
+    }
+    return post
+}
+
+// Função para processar avatar de usuário
+async function processUserAvatar(user) {
+    if (user.avatar) {
+        const processedAvatar = await processImageData(user.avatar)
+        
+        // Se a imagem foi convertida (mudou de caminho para base64), atualizar no banco
+        if (processedAvatar && processedAvatar !== user.avatar && processedAvatar.startsWith('data:image/')) {
+            db.run('UPDATE users SET avatar = ? WHERE id = ?', [processedAvatar, user.id], (err) => {
+                if (err) {
+                    console.error('Erro ao atualizar avatar no banco:', err)
+                } else {
+                    console.log(`✅ Avatar do usuário ${user.id} atualizado no banco`)
+                }
+            })
+        }
+        
+        user.avatar = processedAvatar
+    }
+    return user
+}
+
+app.use(express.json({ limit: '10mb' }))
 app.use(express.static('public'))
 app.use(cors())
 app.use(session({
@@ -35,18 +212,10 @@ app.use(session({
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }))
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'public/uploads/')
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname)
-    }
-})
-
+// Configuração do Multer para armazenar em memória (não em disco)
 const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB (antes da otimização)
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true)
@@ -193,14 +362,20 @@ app.post('/api/logout', (req, res) => {
     res.json({ success: true })
 })
 
-app.post('/api/posts', requireAuth, upload.single('image'), (req, res) => {
+app.post('/api/posts', requireAuth, upload.single('image'), async (req, res) => {
     const { content } = req.body
     const userId = req.session.userId
-    const image = req.file ? `/uploads/${req.file.filename}` : null
+    
+    // Converter imagem para base64 se existir
+    let imageData = null
+    if (req.file) {
+        const optimizedImage = await optimizeImage(req.file.buffer, { maxWidth: 800, maxHeight: 800, quality: 80 })
+        imageData = `data:${optimizedImage.mimeType};base64,${optimizedImage.buffer.toString('base64')}`
+    }
     
     db.run(
         'INSERT INTO posts (user_id, content, image, created_at) VALUES (?, ?, ?, ?)',
-        [userId, content, image, getCurrentLocalDateTime()],
+        [userId, content, imageData, getCurrentLocalDateTime()],
         function(err) {
             if (err) {
                 return res.status(500).json({ error: 'Erro ao criar post' })
@@ -210,7 +385,7 @@ app.post('/api/posts', requireAuth, upload.single('image'), (req, res) => {
     )
 })
 
-app.get('/api/posts', (req, res) => {
+app.get('/api/posts', async (req, res) => {
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 10
     const offset = (page - 1) * limit
@@ -311,7 +486,7 @@ app.get('/api/posts', (req, res) => {
     console.log('Query SQL:', query)
     console.log('Parâmetros:', params)
     
-    db.all(query, params, (err, posts) => {
+    db.all(query, params, async (err, posts) => {
         if (err) {
             console.error('Erro ao buscar posts:', err)
             return res.status(500).json({ error: 'Erro ao buscar posts' })
@@ -339,7 +514,25 @@ app.get('/api/posts', (req, res) => {
             })
         }
         
-        res.json(posts)
+        // Processar imagens automaticamente
+        const processedPosts = []
+        for (const post of posts) {
+            const processedPost = await processPostImages(post)
+            
+            // Processar avatar do usuário do post
+            if (processedPost.avatar) {
+                processedPost.avatar = await processImageData(processedPost.avatar)
+            }
+            
+            // Processar avatar do usuário que compartilhou
+            if (processedPost.shared_by_avatar) {
+                processedPost.shared_by_avatar = await processImageData(processedPost.shared_by_avatar)
+            }
+            
+            processedPosts.push(processedPost)
+        }
+        
+        res.json(processedPosts)
     })
 })
 
@@ -469,17 +662,13 @@ app.delete('/api/posts/:postId', requireAuth, (req, res) => {
             return res.status(404).json({ error: 'Post não encontrado ou você não tem permissão para excluí-lo' })
         }
         
+        // Remover a imagem do banco de dados se ela existir
         if (post.image) {
-            const fs = require('fs')
-            const imagePath = path.join(__dirname, 'public', post.image)
-            
-            if (fs.existsSync(imagePath)) {
-                fs.unlink(imagePath, (err) => {
-                    if (err) {
-                        console.error('Erro ao excluir arquivo de imagem:', err)
-                    }
-                })
-            }
+            db.run('UPDATE posts SET image = NULL WHERE id = ?', [postId], (err) => {
+                if (err) {
+                    console.error('Erro ao remover imagem do banco:', err)
+                }
+            })
         }
         
         db.run('DELETE FROM likes WHERE post_id = ?', [postId], (err) => {
@@ -601,33 +790,49 @@ app.get('/api/user/shares', requireAuth, (req, res) => {
     })
 })
 
-app.get('/api/user', (req, res) => {
+app.get('/api/user', async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: 'Não autorizado' })
     }
     
     db.get('SELECT id, username, email, full_name, bio, avatar FROM users WHERE id = ?', 
-        [req.session.userId], (err, user) => {
+        [req.session.userId], async (err, user) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar usuário' })
         }
-        res.json(user)
+        
+        // Processar avatar automaticamente
+        const processedUser = await processUserAvatar(user)
+        res.json(processedUser)
     })
 })
 
-app.put('/api/user', requireAuth, upload.single('avatar'), (req, res) => {
+app.put('/api/user', requireAuth, upload.single('avatar'), async (req, res) => {
     const { fullName, bio, removeAvatar } = req.body
     const userId = req.session.userId
-    const avatar = req.file ? `/uploads/${req.file.filename}` : null
+    
+    // Otimizar e converter avatar para base64 se existir
+    let avatarData = null
+    if (req.file) {
+        const optimizedAvatar = await optimizeImage(req.file.buffer, { 
+            maxWidth: 200, 
+            maxHeight: 200, 
+            quality: 85,
+            format: 'jpeg'
+        })
+        avatarData = `data:${optimizedAvatar.mimeType};base64,${optimizedAvatar.buffer.toString('base64')}`
+        
+        console.log(`Avatar otimizado: ${optimizedAvatar.originalSize} → ${optimizedAvatar.optimizedSize} bytes (${optimizedAvatar.compressionRatio}% redução)`)
+    }
     
     let query = 'UPDATE users SET full_name = ?, bio = ?'
     let params = [fullName, bio]
     
     if (removeAvatar === 'true' || removeAvatar === true) {
         query += ', avatar = NULL'
-    } else if (avatar) {
+    } else if (avatarData) {
         query += ', avatar = ?'
-        params.push(avatar)
+        params.push(avatarData)
     }
     
     query += ' WHERE id = ?'
@@ -641,7 +846,7 @@ app.put('/api/user', requireAuth, upload.single('avatar'), (req, res) => {
     })
 })
 
-app.get('/api/user/:userId', (req, res) => {
+app.get('/api/user/:userId', async (req, res) => {
     const { userId } = req.params
     const currentUserId = req.session.userId
     
@@ -655,7 +860,7 @@ app.get('/api/user/:userId', (req, res) => {
         WHERE u.id = ?
     `
     
-    db.get(query, [currentUserId, userId], (err, user) => {
+    db.get(query, [currentUserId, userId], async (err, user) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar usuário' })
         }
@@ -664,9 +869,12 @@ app.get('/api/user/:userId', (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado' })
         }
         
+        // Processar avatar automaticamente
+        const processedUser = await processUserAvatar(user)
+        
         const formattedUser = {
-            ...user,
-            isFollowing: user.isFollowing === 1
+            ...processedUser,
+            isFollowing: processedUser.isFollowing === 1
         }
         
         res.json(formattedUser)
@@ -701,7 +909,7 @@ app.get('/api/user/:userId/stats', (req, res) => {
     })
 })
 
-app.get('/api/users', (req, res) => {
+app.get('/api/users', async (req, res) => {
     const currentUserId = req.session.userId
     
     const query = `
@@ -715,17 +923,22 @@ app.get('/api/users', (req, res) => {
         ORDER BY u.username ASC
     `
     
-    db.all(query, [currentUserId, currentUserId], (err, users) => {
+    db.all(query, [currentUserId, currentUserId], async (err, users) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar usuários' })
         }
         
-        const formattedUsers = users.map(user => ({
-            ...user,
-            isFollowing: user.isFollowing === 1
-        }))
+        // Processar avatares automaticamente
+        const processedUsers = []
+        for (const user of users) {
+            const processedUser = await processUserAvatar(user)
+            processedUsers.push({
+                ...processedUser,
+                isFollowing: processedUser.isFollowing === 1
+            })
+        }
         
-        res.json(formattedUsers)
+        res.json(processedUsers)
     })
 })
 
