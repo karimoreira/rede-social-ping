@@ -166,8 +166,8 @@ async function checkAuthStatus() {
         } else {
             showAuth()
         }
-    } catch (error) {
-        console.error('Erro ao verificar autenticação:', error)
+            } catch (error) {
+            console.error('Erro ao verificar autenticação:', error)
         showAuth()
     }
 }
@@ -679,29 +679,13 @@ function createPostElement(post) {
     
     const isReposted = post.isShared || post.isShared === 1;
     
-    if (isReposted) {
-        console.log('Post repostado:', {
-            id: post.id,
-            username: post.username,
-            shared_by_username: post.shared_by_username,
-            full_name: post.full_name,
-            shared_by_full_name: post.shared_by_full_name,
-            avatar: post.avatar,
-            shared_by_avatar: post.shared_by_avatar
-        });
-    }
+
     
     const displayUsername = isReposted && post.shared_by_username ? post.shared_by_username : post.username;
     const displayFullName = isReposted && post.shared_by_full_name ? post.shared_by_full_name : post.full_name;
     const displayAvatar = isReposted && post.shared_by_avatar ? post.shared_by_avatar : post.avatar;
     
-    if (isReposted) {
-        console.log('Valores finais para exibição:', {
-            displayUsername,
-            displayFullName,
-            displayAvatar
-        });
-    }
+
     
     const repostIndicator = isReposted ? `
         <div class="repost-indicator">
@@ -820,19 +804,19 @@ async function handleShare(postId, post) {
         return;
     }
     
-    console.log('Tentando compartilhar post:', postId, 'Post data:', post)
+    
     
     try {
         const hasShared = post.isShared === 1
-        console.log('Post já compartilhado?', hasShared)
+
         
         if (hasShared) {
-            console.log('Removendo compartilhamento...')
+
             const response = await fetch(`${API_BASE}/posts/${postId}/share`, {
                 method: 'DELETE'
             })
             
-            console.log('Resposta da remoção:', response.status, response.statusText)
+
             
             if (response.ok) {
                 showToast('Post removido dos seus compartilhamentos', 'success')
@@ -858,7 +842,7 @@ async function handleShare(postId, post) {
                 })
             })
             
-            console.log('Resposta do compartilhamento:', response.status, response.statusText)
+
             
             if (response.ok) {
                 showToast('Post compartilhado com sucesso!', 'success')
@@ -869,12 +853,10 @@ async function handleShare(postId, post) {
                 }
             } else {
                 const data = await response.json()
-                console.error('Erro no compartilhamento:', data)
                 showToast(data.error || 'Erro ao compartilhar post', 'error')
             }
         }
     } catch (error) {
-        console.error('Erro de conexão ao compartilhar:', error)
         showToast('Erro de conexão', 'error')
     }
 }
@@ -937,6 +919,7 @@ async function handleShareFromModal(postId) {
             showToast('Erro ao carregar dados do post', 'error');
         }
     } catch (error) {
+        console.error('Erro de conexão ao compartilhar:', error);
         showToast('Erro de conexão', 'error');
     }
 }
@@ -1118,8 +1101,8 @@ async function loadUserStats() {
         document.getElementById('profilePostsCount').textContent = stats.posts_count
         document.getElementById('profileFollowersCount').textContent = stats.followers_count
         document.getElementById('profileFollowingCount').textContent = stats.following_count
-    } catch (error) {
-        console.error('Erro ao carregar estatísticas:', error)
+            } catch (error) {
+            console.error('Erro ao carregar estatísticas:', error)
         document.getElementById('profilePostsCount').textContent = '0'
         document.getElementById('profileFollowersCount').textContent = '0'
         document.getElementById('profileFollowingCount').textContent = '0'
@@ -1341,8 +1324,8 @@ async function loadExploreContent() {
                 </div>
             `
         }
-    } catch (error) {
-        console.error('Erro ao carregar conteúdo:', error)
+            } catch (error) {
+            console.error('Erro ao carregar conteúdo:', error)
         searchResults.innerHTML = `
             <div class="no-search-message">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -1438,10 +1421,7 @@ async function showPostDetails(postId) {
         const post = await response.json();
         
         if (response.ok) {
-            console.log('Post object in showPostDetails:', post)
-            console.log('post.avatar:', post.avatar)
-            console.log('post.user_avatar:', post.user_avatar)
-            console.log('post.user:', post.user)
+            
             
             const isLiked = post.isLiked || false;
             const likeIconClass = isLiked ? 'fas fa-heart' : 'far fa-heart';
@@ -1499,7 +1479,7 @@ async function showPostDetails(postId) {
             showToast('Erro ao carregar detalhes do post', 'error');
         }
     } catch (error) {
-        console.error('Erro ao carregar detalhes do post:', error)
+
         showToast('Erro de conexão', 'error')
     }
 }
@@ -1569,7 +1549,7 @@ async function viewUserProfile(userId) {
             showToast('Erro ao carregar perfil do usuário', 'error')
         }
     } catch (error) {
-        console.error('Erro ao carregar perfil do usuário:', error)
+
         showToast('Erro de conexão', 'error')
     }
 }

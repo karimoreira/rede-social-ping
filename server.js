@@ -86,8 +86,8 @@ async function optimizeImage(buffer, options = {}) {
             optimizedSize: optimizedBuffer.length,
             compressionRatio: ((buffer.length - optimizedBuffer.length) / buffer.length * 100).toFixed(1)
         }
-    } catch (error) {
-        console.error('Erro ao otimizar imagem:', error)
+            } catch (error) {
+            console.error('Erro ao otimizar imagem:', error)
 
         return {
             buffer: buffer,
@@ -143,16 +143,15 @@ async function processImageData(imageData) {
             
             const base64Image = `data:${optimizedImage.mimeType};base64,${optimizedImage.buffer.toString('base64')}`
             
-            console.log(`✅ Imagem convertida automaticamente: ${fileName}`)
-            console.log(`   Tamanho: ${optimizedImage.originalSize} → ${optimizedImage.optimizedSize} bytes (${optimizedImage.compressionRatio}% redução)`)
+
             
 
             fs.unlinkSync(filePath)
-            console.log(`🗑️ Arquivo original deletado: ${filePath}`)
+
             
             return base64Image
         } catch (error) {
-            console.error(` Erro ao converter imagem ${imageData}:`, error.message)
+            console.error(`Erro ao converter imagem ${imageData}:`, error.message)
             return null
         }
     }
@@ -170,8 +169,6 @@ async function processPostImages(post) {
             db.run('UPDATE posts SET image = ? WHERE id = ?', [processedImage, post.id], (err) => {
                 if (err) {
                     console.error('Erro ao atualizar imagem do post no banco:', err)
-                } else {
-                    console.log(`✅ Imagem do post ${post.id} atualizada no banco`)
                 }
             })
         }
@@ -191,8 +188,6 @@ async function processUserAvatar(user) {
             db.run('UPDATE users SET avatar = ? WHERE id = ?', [processedAvatar, user.id], (err) => {
                 if (err) {
                     console.error('Erro ao atualizar avatar no banco:', err)
-                } else {
-                    console.log(`✅ Avatar do usuário ${user.id} atualizado no banco`)
                 }
             })
         }
@@ -392,7 +387,7 @@ app.get('/api/posts', async (req, res) => {
     const userId = req.query.user_id
     const currentUserId = req.session.userId || null
     
-    console.log('Buscando posts - Page:', page, 'Limit:', limit, 'Current User ID:', currentUserId)
+
     
     let query = `
         SELECT 
@@ -483,8 +478,7 @@ app.get('/api/posts', async (req, res) => {
     query += ' ORDER BY sort_date DESC LIMIT ? OFFSET ?'
     params.push(limit, offset)
     
-    console.log('Query SQL:', query)
-    console.log('Parâmetros:', params)
+
     
     db.all(query, params, async (err, posts) => {
         if (err) {
@@ -492,27 +486,9 @@ app.get('/api/posts', async (req, res) => {
             return res.status(500).json({ error: 'Erro ao buscar posts' })
         }
         
-        if (currentUserId) {
-            db.get('SELECT username, full_name, avatar FROM users WHERE id = ?', [currentUserId], (err, user) => {
-                if (!err && user) {
-                    console.log('Dados do usuário atual (userteste):', user)
-                }
-            })
-        }
+
         
-        console.log('Posts encontrados:', posts.length)
-        if (posts.length > 0) {
-            console.log('Primeiro post:', {
-                id: posts[0].id,
-                isShared: posts[0].isShared,
-                post_type: posts[0].post_type,
-                user_id: posts[0].user_id,
-                username: posts[0].username,
-                shared_by_username: posts[0].shared_by_username,
-                shared_by_full_name: posts[0].shared_by_full_name,
-                shared_by_avatar: posts[0].shared_by_avatar
-            })
-        }
+
         
         // Processar imagens automaticamente
         const processedPosts = []
@@ -664,24 +640,11 @@ app.delete('/api/posts/:postId', requireAuth, (req, res) => {
         
         // Remover a imagem do banco de dados se ela existir
         if (post.image) {
-            db.run('UPDATE posts SET image = NULL WHERE id = ?', [postId], (err) => {
-                if (err) {
-                    console.error('Erro ao remover imagem do banco:', err)
-                }
-            })
+            db.run('UPDATE posts SET image = NULL WHERE id = ?', [postId])
         }
         
-        db.run('DELETE FROM likes WHERE post_id = ?', [postId], (err) => {
-            if (err) {
-                console.error('Erro ao excluir likes:', err)
-            }
-        })
-        
-        db.run('DELETE FROM comments WHERE post_id = ?', [postId], (err) => {
-            if (err) {
-                console.error('Erro ao excluir comentários:', err)
-            }
-        })
+        db.run('DELETE FROM likes WHERE post_id = ?', [postId])
+        db.run('DELETE FROM comments WHERE post_id = ?', [postId])
         
         db.run('DELETE FROM posts WHERE id = ?', [postId], function(err) {
             if (err) {
@@ -697,8 +660,6 @@ app.post('/api/posts/:postId/share', requireAuth, (req, res) => {
     const { postId } = req.params
     const userId = req.session.userId
     
-    console.log('Tentativa de compartilhamento - Post ID:', postId, 'User ID:', userId)
-    
     db.get('SELECT * FROM posts WHERE id = ?', [postId], (err, originalPost) => {
         if (err) {
             console.error('Erro ao buscar post original:', err)
@@ -706,11 +667,8 @@ app.post('/api/posts/:postId/share', requireAuth, (req, res) => {
         }
         
         if (!originalPost) {
-            console.log('Post não encontrado:', postId)
             return res.status(404).json({ error: 'Post não encontrado' })
         }
-        
-        console.log('Post original encontrado:', originalPost)
         
         db.get('SELECT * FROM shares WHERE user_id = ? AND original_post_id = ?', [userId, postId], (err, existingShare) => {
             if (err) {
@@ -719,11 +677,8 @@ app.post('/api/posts/:postId/share', requireAuth, (req, res) => {
             }
             
             if (existingShare) {
-                console.log('Usuário já compartilhou este post')
                 return res.status(400).json({ error: 'Você já compartilhou este post' })
             }
-            
-            console.log('Criando novo compartilhamento...')
             
             db.run('INSERT INTO shares (user_id, original_post_id, created_at) VALUES (?, ?, ?)', 
                 [userId, postId, getCurrentLocalDateTime()], function(err) {
@@ -732,7 +687,6 @@ app.post('/api/posts/:postId/share', requireAuth, (req, res) => {
                     return res.status(500).json({ error: 'Erro ao compartilhar post' })
                 }
                 
-                console.log('Compartilhamento criado com sucesso. Share ID:', this.lastID)
                 res.json({ success: true, message: 'Post compartilhado com sucesso' })
             })
         })
@@ -743,22 +697,16 @@ app.delete('/api/posts/:postId/share', requireAuth, (req, res) => {
     const { postId } = req.params
     const userId = req.session.userId
     
-    console.log('Tentativa de remover compartilhamento - Post ID:', postId, 'User ID:', userId)
-    
     db.run('DELETE FROM shares WHERE user_id = ? AND original_post_id = ?', [userId, postId], function(err) {
         if (err) {
             console.error('Erro ao remover compartilhamento:', err)
             return res.status(500).json({ error: 'Erro interno do servidor' })
         }
         
-        console.log('Linhas afetadas na remoção:', this.changes)
-        
         if (this.changes === 0) {
-            console.log('Compartilhamento não encontrado para remoção')
             return res.status(404).json({ error: 'Compartilhamento não encontrado' })
         }
         
-        console.log('Compartilhamento removido com sucesso')
         res.json({ success: true, message: 'Compartilhamento removido com sucesso' })
     })
 })
@@ -822,7 +770,7 @@ app.put('/api/user', requireAuth, upload.single('avatar'), async (req, res) => {
         })
         avatarData = `data:${optimizedAvatar.mimeType};base64,${optimizedAvatar.buffer.toString('base64')}`
         
-        console.log(`Avatar otimizado: ${optimizedAvatar.originalSize} → ${optimizedAvatar.optimizedSize} bytes (${optimizedAvatar.compressionRatio}% redução)`)
+
     }
     
     let query = 'UPDATE users SET full_name = ?, bio = ?'
@@ -942,7 +890,7 @@ app.get('/api/users', async (req, res) => {
             return res.status(500).json({ error: 'Erro ao buscar usuários' })
         }
         
-        // Processar avatares automaticamente
+
         const processedUsers = []
         for (const user of users) {
             const processedUser = await processUserAvatar(user)

@@ -64,8 +64,7 @@ function initDatabase() {
         )
       `);
 
-      console.log('banco de dados inicializado com sucesso!');
-      console.log('arquivo criado em:', dbPath);
+      
       resolve();
     });
   });
@@ -74,9 +73,9 @@ function initDatabase() {
 initDatabase()
   .then(() => {
     db.close();
-    console.log('conexão com banco fechada');
+    
   })
   .catch((error) => {
-    console.error('erro ao inicializar banco:', error);
+
     db.close();
   }); 
