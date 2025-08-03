@@ -472,9 +472,9 @@ app.get('/api/posts', async (req, res) => {
             FROM posts p
             JOIN users u ON p.user_id = u.id
             JOIN shares s ON p.id = s.original_post_id
-            WHERE s.user_id = ? AND p.user_id = ?
+            WHERE s.user_id = ?
         `
-        params = [userId, currentUserId, userId]
+        params = [userId, userId]
     }
     
     query += ' ORDER BY sort_date DESC LIMIT ? OFFSET ?'

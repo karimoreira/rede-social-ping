@@ -724,7 +724,7 @@ function createPostElement(post) {
                 ${displayAvatarHtml}
             </div>
             <div class="post-user-info">
-                <h4>${displayFullName || displayUsername}</h4>
+                <h4 class="user-name-clickable" data-user-id="${isReposted ? post.shared_by_user_id : post.user_id}" data-username="${displayUsername}">${displayFullName || displayUsername}</h4>
                 <span>@${displayUsername} • ${timeAgo}</span>
             </div>
         </div>
@@ -781,6 +781,17 @@ function createPostElement(post) {
     
     if (deleteRepostBtn) {
         deleteRepostBtn.addEventListener('click', () => handleDeleteRepost(post.id, postElement));
+    }
+    
+    // Adicionar evento de clique para o nome do usuário
+    const userNameElement = postElement.querySelector('.user-name-clickable');
+    if (userNameElement) {
+        userNameElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            const userId = userNameElement.dataset.userId;
+            const username = userNameElement.dataset.username;
+            viewUserProfile(userId, username);
+        });
     }
     
     return postElement;
@@ -1616,12 +1627,17 @@ async function handleFollowUser(e) {
     }
 }
 
-async function viewUserProfile(userId) {
+async function viewUserProfile(userId, username = null) {
     try {
-        const response = await fetch(`${API_BASE}/user/${userId}`)
-        const user = await response.json()
+        const [userResponse, postsResponse] = await Promise.all([
+            fetch(`${API_BASE}/user/${userId}`),
+            fetch(`${API_BASE}/posts?user_id=${userId}&limit=20`)
+        ]);
         
-        if (response.ok) {
+        const user = await userResponse.json();
+        const posts = await postsResponse.json();
+        
+        if (userResponse.ok) {
             const avatarHtml = user.avatar 
                 ? `<img src="${user.avatar}" alt="Avatar" class="user-profile-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                    <div class="user-profile-avatar avatar-fallback" style="display: none;">
@@ -1629,7 +1645,59 @@ async function viewUserProfile(userId) {
                    </div>`
                 : `<div class="user-profile-avatar avatar-fallback">
                      <i class="fas fa-user"></i>
-                   </div>`
+                   </div>`;
+            
+            let postsHtml = '';
+            if (postsResponse.ok && posts.length > 0) {
+                postsHtml = `
+                    <div class="user-profile-posts">
+                        <h4>Posts de ${user.full_name || user.username}</h4>
+                        <div class="user-posts-list">
+                `;
+                
+                posts.forEach(post => {
+                    const timeAgo = formatTimeAgo(new Date(post.sort_date || post.created_at));
+                    const imageHtml = post.image ? `<img src="${post.image}" alt="Post image" class="user-post-image">` : '';
+                    
+                    const isReposted = post.isShared === 1;
+                    const repostIndicator = isReposted ? `
+                        <div class="repost-indicator">
+                            <i class="fas fa-retweet"></i>
+                            <span>Repostado por ${post.shared_by_full_name || post.shared_by_username}</span>
+                        </div>
+                    ` : '';
+                    
+                    postsHtml += `
+                        <div class="user-post-item">
+                            ${repostIndicator}
+                            <div class="user-post-content">
+                                <p>${post.content}</p>
+                                ${imageHtml}
+                            </div>
+                            <div class="user-post-meta">
+                                <span class="user-post-time">${timeAgo}</span>
+                                <div class="user-post-stats">
+                                    <span><i class="fas fa-heart"></i> ${post.likes_count || 0}</span>
+                                    <span><i class="fas fa-comment"></i> ${post.comments_count || 0}</span>
+                                    ${isReposted ? `<span><i class="fas fa-retweet"></i> Repostado</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                postsHtml += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                postsHtml = `
+                    <div class="user-profile-posts">
+                        <h4>Posts de ${user.full_name || user.username}</h4>
+                        <p class="no-posts-message">Este usuário ainda não tem posts.</p>
+                    </div>
+                `;
+            }
             
             showModal(`Perfil de ${user.full_name || user.username}`, `
                 <div class="user-profile-details">
@@ -1652,20 +1720,25 @@ async function viewUserProfile(userId) {
                             <span class="stat-number">${user.followers_count || 0}</span>
                             <span class="stat-label">Seguidores</span>
                         </div>
+                        <div class="stat">
+                            <span class="stat-number">${user.following_count || 0}</span>
+                            <span class="stat-label">Seguindo</span>
+                        </div>
                     </div>
                     <div class="user-profile-actions">
                         <button class="btn ${user.isFollowing ? 'btn-outline' : 'btn-primary'}" onclick="handleFollowUserFromModal(${userId}, this)">
                             ${user.isFollowing ? 'Seguindo' : 'Seguir'}
                         </button>
                     </div>
+                    ${postsHtml}
                 </div>
-            `)
+            `);
         } else {
-            showToast('Erro ao carregar perfil do usuário', 'error')
+            showToast('Erro ao carregar perfil do usuário', 'error');
         }
     } catch (error) {
-
-        showToast('Erro de conexão', 'error')
+        console.error('Erro ao carregar perfil:', error);
+        showToast('Erro de conexão', 'error');
     }
 }
 

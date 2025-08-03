@@ -2474,4 +2474,138 @@ body {
 .delete-repost-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--accent-color);
+}
+
+.user-name-clickable {
+    cursor: pointer;
+    color: var(--accent-color);
+    transition: color 0.2s ease;
+}
+
+.user-name-clickable:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.user-profile-posts {
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.user-profile-posts h4 {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.user-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.user-post-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.user-post-item:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-hover);
+}
+
+.user-post-content p {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.user-post-image {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+}
+
+.user-post-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.user-post-time {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.user-post-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.user-post-stats span {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.user-post-stats i {
+    color: var(--accent-color);
+    font-size: 0.75rem;
+}
+
+.no-posts-message {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+}
+
+
+.user-post-item .repost-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+}
+
+.user-post-item .repost-indicator i {
+    color: var(--accent-color);
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .user-profile-posts {
+        margin-top: 1.5rem;
+    }
+    
+    .user-post-tem {
+        padding: 0.75rem;
+    }
+    
+    .user-post-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .user-post-stats {
+        gap: 0.75rem;
+    }
 } 
