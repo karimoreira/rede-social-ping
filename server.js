@@ -183,7 +183,6 @@ async function processUserAvatar(user) {
     if (user.avatar) {
         const processedAvatar = await processImageData(user.avatar)
         
-       
         if (processedAvatar && processedAvatar !== user.avatar && processedAvatar.startsWith('data:image/')) {
             db.run('UPDATE users SET avatar = ? WHERE id = ?', [processedAvatar, user.id], (err) => {
                 if (err) {
@@ -194,6 +193,7 @@ async function processUserAvatar(user) {
         
         user.avatar = processedAvatar
     }
+    
     return user
 }
 
@@ -746,11 +746,13 @@ app.get('/api/user', async (req, res) => {
     db.get('SELECT id, username, email, full_name, bio, avatar FROM users WHERE id = ?', 
         [req.session.userId], async (err, user) => {
         if (err) {
+            console.error('Erro ao buscar usuário:', err)
             return res.status(500).json({ error: 'Erro ao buscar usuário' })
         }
         
         // Processar avatar automaticamente
         const processedUser = await processUserAvatar(user)
+        
         res.json(processedUser)
     })
 })

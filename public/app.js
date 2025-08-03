@@ -64,6 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 function initializeApp() {
+
+    if (!elements.profileAvatar) {
+        console.error('Elemento profileAvatar não encontrado')
+    }
+    if (!elements.profileAvatarFallback) {
+        console.error('Elemento profileAvatarFallback não encontrado')
+    }
+    
     const tabBtns = document.querySelectorAll('.tab-btn')
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -158,18 +166,22 @@ function setupEventListeners() {
 
 async function checkAuthStatus() {
     try {
+        console.log('Verificando status de autenticação...')
         const response = await fetch(`${API_BASE}/user`)
+        console.log('Status da resposta:', response.status)
+        
         if (response.ok) {
             currentUser = await response.json()
-            console.log('checkAuthStatus - Avatar do usuário:', currentUser.avatar)
+            console.log('Usuário autenticado:', currentUser.username)
             showBlog()
             loadPosts()
             updateUserInterface()
         } else {
+            console.log('Usuário não autenticado, mostrando tela de login')
             showAuth()
         }
-            } catch (error) {
-            console.error('Erro ao verificar autenticação:', error)
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
         showAuth()
     }
 }
@@ -194,7 +206,7 @@ function switchSection(section) {
             break
         case 'explore':
             showExplore()
-            loadTrendingTopics()
+            loadExploreContent()
             break
     }
 }
@@ -276,7 +288,6 @@ async function handleLogin(e) {
         
         if (response.ok) {
             currentUser = data.user
-            console.log('handleLogin - Avatar do usuário:', currentUser.avatar)
             showToast('Login realizado com sucesso!', 'success')
             showBlog()
             loadPosts()
@@ -324,7 +335,6 @@ async function handleRegister(e) {
         
         if (response.ok) {
             currentUser = data.user
-            console.log('handleRegister - Avatar do usuário:', currentUser.avatar)
             showToast('Conta criada com sucesso!', 'success')
             showBlog()
             loadPosts()
@@ -402,29 +412,7 @@ function updateUserInterface() {
         elements.createPostAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
     }
     
-    if (elements.profileAvatar) {
-        console.log('updateUserInterface - Avatar do usuário:', currentUser.avatar)
-        if (currentUser.avatar) {
-            console.log('updateUserInterface - Configurando avatar...')
-            elements.profileAvatar.src = currentUser.avatar
-            elements.profileAvatar.style.display = 'block'
-            elements.profileAvatarFallback.style.display = 'none'
-            elements.profileAvatar.onerror = function() {
-                console.log('updateUserInterface - Erro ao carregar avatar')
-                this.style.display = 'none'
-                elements.profileAvatarFallback.style.display = 'flex'
-            }
-            elements.profileAvatar.onload = function() {
-                console.log('updateUserInterface - Avatar carregado com sucesso')
-            }
-        } else {
-            console.log('updateUserInterface - Usuário não tem avatar, mostrando fallback')
-            elements.profileAvatar.style.display = 'none'
-            elements.profileAvatarFallback.style.display = 'flex'
-            const userInitial = (currentUser.full_name || currentUser.username).charAt(0).toUpperCase()
-            elements.profileAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
-        }
-    }
+
     
     const profileUserName = document.getElementById('profileUserName')
     const profileUserBio = document.getElementById('profileUserBio')
@@ -506,7 +494,6 @@ async function saveAvatar() {
             const userResponse = await fetch(`${API_BASE}/user`)
             if (userResponse.ok) {
                 currentUser = await userResponse.json()
-                console.log('saveAvatar - Novo avatar:', currentUser.avatar)
                 updateUserInterface()
                 loadProfileData()
             }
@@ -1085,32 +1072,30 @@ async function loadProfileData() {
         const response = await fetch(`${API_BASE}/user`)
         const userData = await response.json()
         
-        console.log('loadProfileData - Dados do usuário:', userData)
-        
         document.getElementById('profileUserName').textContent = userData.full_name || userData.username
         document.getElementById('profileUserBio').textContent = userData.bio || 'sem bio'
         
-        console.log('Elemento profileAvatar encontrado:', elements.profileAvatar)
-        console.log('Avatar do usuário:', userData.avatar)
+        // Verificar se os elementos existem
+        if (!elements.profileAvatar || !elements.profileAvatarFallback) {
+            console.error('Elementos do avatar não encontrados')
+            return
+        }
+        
+
+        currentUser = userData
         
         if (userData.avatar) {
-            console.log('Usuário tem avatar, configurando...')
             elements.profileAvatar.src = userData.avatar
             elements.profileAvatar.style.display = 'block'
             elements.profileAvatarFallback.style.display = 'none'
             elements.profileAvatar.onerror = function() {
-                console.log('Erro ao carregar imagem do avatar')
                 this.style.display = 'none'
                 elements.profileAvatarFallback.style.display = 'flex'
-            }
-            elements.profileAvatar.onload = function() {
-                console.log('Avatar carregado com sucesso no perfil')
+                elements.profileAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
             }
         } else {
-            console.log('Usuário não tem avatar, mostrando fallback')
             elements.profileAvatar.style.display = 'none'
             elements.profileAvatarFallback.style.display = 'flex'
-            const userInitial = (userData.full_name || userData.username).charAt(0).toUpperCase()
             elements.profileAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
         }
         
@@ -1548,10 +1533,21 @@ async function viewUserProfile(userId) {
         const user = await response.json()
         
         if (response.ok) {
+            const avatarHtml = user.avatar 
+                ? `<img src="${user.avatar}" alt="Avatar" class="user-profile-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                   <div class="user-profile-avatar avatar-fallback" style="display: none;">
+                     <i class="fas fa-user"></i>
+                   </div>`
+                : `<div class="user-profile-avatar avatar-fallback">
+                     <i class="fas fa-user"></i>
+                   </div>`
+            
             showModal(`Perfil de ${user.full_name || user.username}`, `
                 <div class="user-profile-details">
                     <div class="user-profile-header">
-                        <img src="${user.avatar || 'https://via.placeholder.com/100x100/d4af37/ffffff?text=U'}" alt="Avatar" class="user-profile-avatar" onerror="this.src='https://via.placeholder.com/100x100/d4af37/ffffff?text=U';">
+                        <div class="user-profile-avatar-container">
+                            ${avatarHtml}
+                        </div>
                         <div class="user-profile-info">
                             <h3>${user.full_name || user.username}</h3>
                             <p>@${user.username}</p>
@@ -1569,7 +1565,7 @@ async function viewUserProfile(userId) {
                         </div>
                     </div>
                     <div class="user-profile-actions">
-                        <button class="btn btn-primary" onclick="handleFollowUserFromModal(${userId}, this)">
+                        <button class="btn ${user.isFollowing ? 'btn-outline' : 'btn-primary'}" onclick="handleFollowUserFromModal(${userId}, this)">
                             ${user.isFollowing ? 'Seguindo' : 'Seguir'}
                         </button>
                     </div>
@@ -1585,10 +1581,12 @@ async function viewUserProfile(userId) {
 }
 
 async function handleFollowUserFromModal(userId, button) {
-    const isFollowing = button.textContent === 'Seguindo'
+    const buttonText = button.textContent.trim()
+    const isFollowing = buttonText === 'Seguindo'
     
     try {
         const method = isFollowing ? 'DELETE' : 'POST'
+        
         const response = await fetch(`${API_BASE}/user/${userId}/follow`, {
             method: method
         })
