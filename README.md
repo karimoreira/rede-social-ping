@@ -15,7 +15,7 @@ npm run init-db
 npm start (acesse: http://localhost:3000)
 ```
 
-tive a ideia de desenvolver o ping há algumas semanas, navegar pelas redes sociais atuais tem sido estranho, quase uma ressaca social. excesso de anúncios, informações em excesso e repetitivas... tudo isso gera uma experiência desgastante quando o que queremos é simplesmente interagir com nossos amigos. ping é uma rede social minimalista e focada em conexões humanas, sem monetização excessiva e com uma visualização limpa. essa é a primeira versão da rede social, estou aberto a sugestões, colaborações descontraídas e contribuições via pull requests
+tive a ideia de desenvolver o ping há algumas semanas. uma rede social sem excesso de anúncios, excesso de informações e repetitivas... tudo isso gera uma experiência desgastante quando o que queremos é simplesmente interagir com nossos amigos. ping é uma rede social minimalista e focada em conexões humanas, sem monetização e com uma visualização limpa. essa é a primeira versão da rede social, estou aberto a sugestões, colaborações descontraídas e contribuições via pull requests
 
 # linguagens
 backend: node.js + express

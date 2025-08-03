@@ -1,7 +1,7 @@
 {
   "name": "social-network",
   "version": "1.0.0",
-  "description": "Rede social interativa e moderna",
+  "description": "rede social minimalista",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -23,6 +23,5 @@
     "nodemon": "^3.0.1"
   },
   "keywords": ["social", "network", "express", "nodejs"],
-  "author": "Dev Especialista",
   "license": "MIT"
 } 

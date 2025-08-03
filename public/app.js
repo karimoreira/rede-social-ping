@@ -27,6 +27,7 @@ const elements = {
     
     createPostAvatar: document.getElementById('createPostAvatar'),
     avatarImg: document.getElementById('avatarImg'),
+    profileAvatar: document.getElementById('profileAvatar'),
     profilePosts: document.getElementById('profilePosts'),
     editAvatarBtn: document.getElementById('editAvatarBtn'),
     
@@ -160,6 +161,7 @@ async function checkAuthStatus() {
         const response = await fetch(`${API_BASE}/user`)
         if (response.ok) {
             currentUser = await response.json()
+            console.log('checkAuthStatus - Avatar do usuário:', currentUser.avatar)
             showBlog()
             loadPosts()
             updateUserInterface()
@@ -274,6 +276,7 @@ async function handleLogin(e) {
         
         if (response.ok) {
             currentUser = data.user
+            console.log('handleLogin - Avatar do usuário:', currentUser.avatar)
             showToast('Login realizado com sucesso!', 'success')
             showBlog()
             loadPosts()
@@ -321,6 +324,7 @@ async function handleRegister(e) {
         
         if (response.ok) {
             currentUser = data.user
+            console.log('handleRegister - Avatar do usuário:', currentUser.avatar)
             showToast('Conta criada com sucesso!', 'success')
             showBlog()
             loadPosts()
@@ -398,18 +402,24 @@ function updateUserInterface() {
         elements.createPostAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
     }
     
-    const profileAvatar = document.getElementById('profileAvatar')
-    if (profileAvatar) {
+    if (elements.profileAvatar) {
+        console.log('updateUserInterface - Avatar do usuário:', currentUser.avatar)
         if (currentUser.avatar) {
-            profileAvatar.src = currentUser.avatar
-            profileAvatar.style.display = 'block'
+            console.log('updateUserInterface - Configurando avatar...')
+            elements.profileAvatar.src = currentUser.avatar
+            elements.profileAvatar.style.display = 'block'
             elements.profileAvatarFallback.style.display = 'none'
-            profileAvatar.onerror = function() {
+            elements.profileAvatar.onerror = function() {
+                console.log('updateUserInterface - Erro ao carregar avatar')
                 this.style.display = 'none'
                 elements.profileAvatarFallback.style.display = 'flex'
             }
+            elements.profileAvatar.onload = function() {
+                console.log('updateUserInterface - Avatar carregado com sucesso')
+            }
         } else {
-            profileAvatar.style.display = 'none'
+            console.log('updateUserInterface - Usuário não tem avatar, mostrando fallback')
+            elements.profileAvatar.style.display = 'none'
             elements.profileAvatarFallback.style.display = 'flex'
             const userInitial = (currentUser.full_name || currentUser.username).charAt(0).toUpperCase()
             elements.profileAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
@@ -496,7 +506,9 @@ async function saveAvatar() {
             const userResponse = await fetch(`${API_BASE}/user`)
             if (userResponse.ok) {
                 currentUser = await userResponse.json()
+                console.log('saveAvatar - Novo avatar:', currentUser.avatar)
                 updateUserInterface()
+                loadProfileData()
             }
             
             showToast('Avatar atualizado com sucesso!', 'success')
@@ -540,6 +552,7 @@ async function removeCurrentAvatar() {
             if (userResponse.ok) {
                 currentUser = await userResponse.json();
                 updateUserInterface();
+                loadProfileData();
             }
             
             showToast('Avatar removido com sucesso!', 'success');
@@ -1072,21 +1085,38 @@ async function loadProfileData() {
         const response = await fetch(`${API_BASE}/user`)
         const userData = await response.json()
         
+        console.log('loadProfileData - Dados do usuário:', userData)
+        
         document.getElementById('profileUserName').textContent = userData.full_name || userData.username
         document.getElementById('profileUserBio').textContent = userData.bio || 'sem bio'
         
-        const profileAvatar = document.getElementById('profileAvatar')
+        console.log('Elemento profileAvatar encontrado:', elements.profileAvatar)
+        console.log('Avatar do usuário:', userData.avatar)
+        
         if (userData.avatar) {
-            profileAvatar.src = userData.avatar
-            profileAvatar.style.display = 'block'
+            console.log('Usuário tem avatar, configurando...')
+            elements.profileAvatar.src = userData.avatar
+            elements.profileAvatar.style.display = 'block'
             elements.profileAvatarFallback.style.display = 'none'
+            elements.profileAvatar.onerror = function() {
+                console.log('Erro ao carregar imagem do avatar')
+                this.style.display = 'none'
+                elements.profileAvatarFallback.style.display = 'flex'
+            }
+            elements.profileAvatar.onload = function() {
+                console.log('Avatar carregado com sucesso no perfil')
+            }
         } else {
-            profileAvatar.style.display = 'none'
+            console.log('Usuário não tem avatar, mostrando fallback')
+            elements.profileAvatar.style.display = 'none'
             elements.profileAvatarFallback.style.display = 'flex'
+            const userInitial = (userData.full_name || userData.username).charAt(0).toUpperCase()
+            elements.profileAvatarFallback.innerHTML = `<i class="fas fa-user"></i>`
         }
         
         await loadUserStats()
     } catch (error) {
+        console.error('Erro ao carregar perfil:', error)
         showToast('Erro ao carregar perfil', 'error')
     }
 }
