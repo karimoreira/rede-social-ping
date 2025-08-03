@@ -680,7 +680,6 @@ function createPostElement(post) {
     const isReposted = post.isShared || post.isShared === 1;
     
 
-    
     const displayUsername = isReposted && post.shared_by_username ? post.shared_by_username : post.username;
     const displayFullName = isReposted && post.shared_by_full_name ? post.shared_by_full_name : post.full_name;
     const displayAvatar = isReposted && post.shared_by_avatar ? post.shared_by_avatar : post.avatar;
@@ -691,6 +690,11 @@ function createPostElement(post) {
         <div class="repost-indicator">
             <i class="fas fa-retweet"></i>
             <span>Repostado de @${post.username}</span>
+            ${currentUser?.id === post.shared_by_user_id ? `
+                <button class="delete-repost-btn" data-post-id="${post.id}" title="Remover repost">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ` : ''}
         </div>
     ` : '';
     
@@ -754,6 +758,7 @@ function createPostElement(post) {
     const shareBtn = postElement.querySelector('.share-btn');
     const commentForm = postElement.querySelector('.comment-form');
     const deleteBtn = postElement.querySelector('.delete-btn');
+    const deleteRepostBtn = postElement.querySelector('.delete-repost-btn');
     
     likeBtn.addEventListener('click', () => handleLike(post.id, likeBtn));
     commentBtn.addEventListener('click', () => toggleComments(postElement));
@@ -762,6 +767,10 @@ function createPostElement(post) {
     
     if (deleteBtn) {
         deleteBtn.addEventListener('click', () => handleDeletePost(post.id, postElement));
+    }
+    
+    if (deleteRepostBtn) {
+        deleteRepostBtn.addEventListener('click', () => handleDeleteRepost(post.id, postElement));
     }
     
     return postElement;
@@ -1006,6 +1015,40 @@ async function loadComments(postElement) {
         }).join('');
     } catch (error) {
         commentsList.innerHTML = '<p>Erro ao carregar comentários</p>';
+    }
+}
+
+async function handleDeleteRepost(postId, postElement) {
+    if (!currentUser) {
+        showToast('Faça login para remover reposts', 'error');
+        return;
+    }
+    
+    if (!confirm('Tem certeza que deseja remover este repost? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const response = await fetch(`${API_BASE}/posts/${postId}/share`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showToast('Repost removido com sucesso!', 'success');
+            postElement.style.opacity = '0';
+            setTimeout(() => {
+                postElement.remove();
+            }, 300);
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Erro ao remover repost', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexão', 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -1409,6 +1452,11 @@ function createPostResultHTML(post) {
         <div class="repost-indicator">
             <i class="fas fa-retweet"></i>
             <span>Repostado de @${post.username}</span>
+            ${currentUser?.id === post.shared_by_user_id ? `
+                <button class="delete-repost-btn" data-post-id="${post.id}" title="Remover repost" onclick="event.stopPropagation(); handleDeleteRepost(${post.id}, this.closest('.post-result'))">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ` : ''}
         </div>
     ` : ''
     

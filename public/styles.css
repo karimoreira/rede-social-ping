@@ -2433,4 +2433,19 @@ body {
 .repost-indicator span {
     font-weight: 500;
     color: wheat;
+}
+
+.delete-repost-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-left: 0.5rem;
+}
+
+.delete-repost-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--accent-color);
 } 
