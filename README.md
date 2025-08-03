@@ -3,7 +3,6 @@
 # instalação do projeto
 ```bash
 
-cd redesocial
 npm install
 
 # rodar os dois serviços de uma vez:
