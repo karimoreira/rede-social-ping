@@ -2343,15 +2343,14 @@ body {
     padding: 1rem;
 }
 
-/* Indicador de repost */
 .repost-indicator {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background-color: var(--bg-tertiary);
+    background-color: #333;
     border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
+    color: #000000;
     font-size: 0.875rem;
 }
 
