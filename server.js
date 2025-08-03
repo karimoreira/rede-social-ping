@@ -27,7 +27,7 @@ function getCurrentLocalDateTime() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-// Função para otimizar imagem
+
 async function optimizeImage(buffer, options = {}) {
     const {
         maxWidth = 800,
@@ -39,10 +39,10 @@ async function optimizeImage(buffer, options = {}) {
     try {
         let image = sharp(buffer)
         
-        // Obter metadados da imagem
+
         const metadata = await image.metadata()
         
-        // Redimensionar se necessário
+
         if (metadata.width > maxWidth || metadata.height > maxHeight) {
             image = image.resize(maxWidth, maxHeight, {
                 fit: 'inside',
@@ -50,7 +50,7 @@ async function optimizeImage(buffer, options = {}) {
             })
         }
         
-        // Converter e comprimir
+
         let optimizedBuffer
         if (format === 'jpeg') {
             optimizedBuffer = await image
@@ -70,7 +70,7 @@ async function optimizeImage(buffer, options = {}) {
                 .toBuffer()
         }
         
-        // Determinar MIME type
+
         const mimeTypes = {
             'jpeg': 'image/jpeg',
             'png': 'image/png',
@@ -88,7 +88,7 @@ async function optimizeImage(buffer, options = {}) {
         }
     } catch (error) {
         console.error('Erro ao otimizar imagem:', error)
-        // Retornar imagem original se falhar
+
         return {
             buffer: buffer,
             mimeType: 'image/jpeg',
@@ -99,23 +99,23 @@ async function optimizeImage(buffer, options = {}) {
     }
 }
 
-// Função para detectar e converter imagens automaticamente
+
 async function processImageData(imageData) {
     if (!imageData) return null
     
-    // Se já é base64, retorna como está
+
     if (imageData.startsWith('data:image/')) {
         return imageData
     }
     
-    // Se é um caminho de arquivo (formato antigo), converte para base64
+ 
     if (imageData.startsWith('/uploads/')) {
         try {
             const filePath = path.join(__dirname, 'public', imageData)
             
-            // Verifica se o arquivo existe
+
             if (!fs.existsSync(filePath)) {
-                console.warn(`Arquivo não encontrado: ${filePath}`)
+                // Silenciosamente retorna null para arquivos inexistentes
                 return null
             }
             
@@ -123,7 +123,7 @@ async function processImageData(imageData) {
             const fileName = path.basename(filePath)
             const ext = path.extname(fileName).toLowerCase()
             
-            // Determinar MIME type baseado na extensão
+
             const mimeTypes = {
                 '.jpg': 'image/jpeg',
                 '.jpeg': 'image/jpeg',
@@ -134,7 +134,7 @@ async function processImageData(imageData) {
             
             const mimeType = mimeTypes[ext] || 'image/jpeg'
             
-            // Otimizar a imagem
+
             const optimizedImage = await optimizeImage(fileBuffer, {
                 maxWidth: imageData.includes('avatar') ? 200 : 800,
                 maxHeight: imageData.includes('avatar') ? 200 : 800,
@@ -146,13 +146,13 @@ async function processImageData(imageData) {
             console.log(`✅ Imagem convertida automaticamente: ${fileName}`)
             console.log(`   Tamanho: ${optimizedImage.originalSize} → ${optimizedImage.optimizedSize} bytes (${optimizedImage.compressionRatio}% redução)`)
             
-            // Deletar arquivo original após conversão
+
             fs.unlinkSync(filePath)
             console.log(`🗑️ Arquivo original deletado: ${filePath}`)
             
             return base64Image
         } catch (error) {
-            console.error(`❌ Erro ao converter imagem ${imageData}:`, error.message)
+            console.error(` Erro ao converter imagem ${imageData}:`, error.message)
             return null
         }
     }
@@ -160,12 +160,12 @@ async function processImageData(imageData) {
     return imageData
 }
 
-// Função para processar todas as imagens de um post
+
 async function processPostImages(post) {
     if (post.image) {
         const processedImage = await processImageData(post.image)
         
-        // Se a imagem foi convertida (mudou de caminho para base64), atualizar no banco
+        
         if (processedImage && processedImage !== post.image && processedImage.startsWith('data:image/')) {
             db.run('UPDATE posts SET image = ? WHERE id = ?', [processedImage, post.id], (err) => {
                 if (err) {
@@ -181,12 +181,12 @@ async function processPostImages(post) {
     return post
 }
 
-// Função para processar avatar de usuário
+
 async function processUserAvatar(user) {
     if (user.avatar) {
         const processedAvatar = await processImageData(user.avatar)
         
-        // Se a imagem foi convertida (mudou de caminho para base64), atualizar no banco
+       
         if (processedAvatar && processedAvatar !== user.avatar && processedAvatar.startsWith('data:image/')) {
             db.run('UPDATE users SET avatar = ? WHERE id = ?', [processedAvatar, user.id], (err) => {
                 if (err) {
@@ -212,10 +212,10 @@ app.use(session({
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
 }))
 
-// Configuração do Multer para armazenar em memória (não em disco)
+
 const upload = multer({ 
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB (antes da otimização)
+    limits: { fileSize: 10 * 1024 * 1024 }, 
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true)
@@ -852,7 +852,8 @@ app.get('/api/user/:userId', async (req, res) => {
     
     const query = `
         SELECT u.id, u.username, u.full_name, u.bio, u.avatar,
-               (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as posts_count,
+               ((SELECT COUNT(*) FROM posts WHERE user_id = u.id) + 
+                (SELECT COUNT(*) FROM shares WHERE user_id = u.id)) as posts_count,
                (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as followers_count,
                CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as isFollowing
         FROM users u
@@ -869,7 +870,7 @@ app.get('/api/user/:userId', async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado' })
         }
         
-        // Processar avatar automaticamente
+
         const processedUser = await processUserAvatar(user)
         
         const formattedUser = {
@@ -884,25 +885,37 @@ app.get('/api/user/:userId', async (req, res) => {
 app.get('/api/user/:userId/stats', (req, res) => {
     const { userId } = req.params
     
-    db.get('SELECT COUNT(*) as posts_count FROM posts WHERE user_id = ?', [userId], (err, postsResult) => {
+ 
+    db.get('SELECT COUNT(*) as original_posts FROM posts WHERE user_id = ?', [userId], (err, postsResult) => {
         if (err) {
             return res.status(500).json({ error: 'Erro ao buscar estatísticas' })
         }
         
-        db.get('SELECT COUNT(*) as followers_count FROM followers WHERE following_id = ?', [userId], (err, followersResult) => {
+
+        db.get('SELECT COUNT(*) as reposts FROM shares WHERE user_id = ?', [userId], (err, sharesResult) => {
             if (err) {
                 return res.status(500).json({ error: 'Erro ao buscar estatísticas' })
             }
             
-            db.get('SELECT COUNT(*) as following_count FROM followers WHERE follower_id = ?', [userId], (err, followingResult) => {
+            db.get('SELECT COUNT(*) as followers_count FROM followers WHERE following_id = ?', [userId], (err, followersResult) => {
                 if (err) {
                     return res.status(500).json({ error: 'Erro ao buscar estatísticas' })
                 }
                 
-                res.json({
-                    posts_count: postsResult.posts_count,
-                    followers_count: followersResult.followers_count,
-                    following_count: followingResult.following_count
+                db.get('SELECT COUNT(*) as following_count FROM followers WHERE follower_id = ?', [userId], (err, followingResult) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Erro ao buscar estatísticas' })
+                    }
+                    
+                    const totalPosts = postsResult.original_posts + sharesResult.reposts
+                    
+                    res.json({
+                        posts_count: totalPosts,
+                        original_posts: postsResult.original_posts,
+                        reposts: sharesResult.reposts,
+                        followers_count: followersResult.followers_count,
+                        following_count: followingResult.following_count
+                    })
                 })
             })
         })
@@ -914,7 +927,8 @@ app.get('/api/users', async (req, res) => {
     
     const query = `
         SELECT u.id, u.username, u.full_name, u.bio, u.avatar,
-               (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as posts_count,
+               ((SELECT COUNT(*) FROM posts WHERE user_id = u.id) + 
+                (SELECT COUNT(*) FROM shares WHERE user_id = u.id)) as posts_count,
                (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as followers_count,
                CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as isFollowing
         FROM users u
