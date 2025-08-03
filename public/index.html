@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ping</title>
+    <title>ping</title>
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Header -->
+ 
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -54,10 +57,9 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Auth Section -->
-        <section class="auth-section" id="authSection">
+
+     <section class="auth-section" id="authSection">
             <div class="auth-container">
                 <div class="auth-card">
                     <div class="auth-header">
@@ -70,7 +72,6 @@
                         <button class="tab-btn" data-tab="register">Cadastrar</button>
                     </div>
                     
-                    <!-- Login Form -->
                     <form class="auth-form active" id="loginForm">
                         <div class="form-group">
                             <label for="loginUsername">Usuário ou Email</label>
@@ -83,7 +84,6 @@
                         <button type="submit" class="btn btn-primary">Entrar</button>
                     </form>
                     
-                    <!-- Register Form -->
                     <form class="auth-form" id="registerForm">
                         <div class="form-group">
                             <label for="registerFullName">Nome Completo</label>
@@ -107,16 +107,14 @@
             </div>
         </section>
 
-        <!-- Blog Section -->
         <section class="blog-section hidden" id="blogSection">
             <div class="blog-container">
-                <!-- Blog Header -->
+
                 <div class="blog-header">
                     <h1 class="blog-title">ping feed</h1>
                     <p class="blog-subtitle">compartilhe vivências e conhecimentos</p>
                 </div>
 
-                <!-- Create Post -->
                 <div class="create-post-card">
                     <div class="post-input-container">
                         <div class="post-avatar-container">
@@ -145,19 +143,16 @@
                     </div>
                 </div>
 
-                <!-- Posts Feed -->
                 <div class="posts-feed" id="postsFeed">
-                    <!-- Posts serão carregados dinamicamente -->
+                  
                 </div>
 
-                <!-- Load More -->
                 <div class="load-more-container">
                     <button class="btn btn-outline" id="loadMoreBtn">Carregar mais posts</button>
                 </div>
             </div>
         </section>
 
-        <!-- Profile Section -->
         <section class="profile-section hidden" id="profileSection">
             <div class="profile-container">
                 <div class="profile-header">
@@ -173,7 +168,7 @@
                         </div>
                     </div>
                     <div class="profile-info-large">
-                        <h1 id="profileUserName">Nome do Usuário</h1>
+                        <h1 id="profileUserName">Nome do usuário</h1>
                         <p id="profileUserBio">Bio do usuário</p>
                         <div class="profile-stats">
                             <div class="stat">
@@ -191,29 +186,25 @@
                         </div>
                         <button class="btn btn-outline" id="editProfileBtn">
                             <i class="fas fa-edit"></i>
-                            Editar Perfil
+                            Editar perfil
                         </button>
                     </div>
                 </div>
                 
                 <div class="profile-content">
                     <div class="profile-posts" id="profilePosts">
-                        <!-- Posts do perfil serão carregados aqui -->
+                      
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Explore Section -->
         <section class="explore-section hidden" id="exploreSection">
             <div class="explore-container">
                 <div class="explore-header">
                     <h1 class="explore-title">Explorar</h1>
                 </div>
 
-
-
-                <!-- Search Results -->
                 <div class="search-results" id="searchResults">
                     <div class="no-search-message">
                         <i class="fas fa-search"></i>
@@ -222,12 +213,10 @@
                     </div>
                 </div>
 
-
             </div>
         </section>
     </main>
 
-    <!-- Modals -->
     <div class="modal-overlay hidden" id="modalOverlay">
         <div class="modal" id="modal">
             <div class="modal-header">
@@ -237,16 +226,16 @@
                 </button>
             </div>
             <div class="modal-content" id="modalContent">
-                <!-- Conteúdo do modal será carregado dinamicamente -->
+              
             </div>
         </div>
     </div>
 
-    <!-- Avatar Upload Modal -->
+
     <div class="modal-overlay hidden" id="avatarModalOverlay">
         <div class="modal" id="avatarModal">
             <div class="modal-header">
-                <h3>Alterar Avatar</h3>
+                <h3>Alterar imagem</h3>
                 <button class="modal-close" id="avatarModalClose">
                     <i class="fas fa-times"></i>
                 </button>
@@ -289,7 +278,7 @@
         </div>
     </div>
 
-    <!-- Edit Profile Modal -->
+
     <div class="modal-overlay hidden" id="editProfileModalOverlay">
         <div class="modal" id="editProfileModal">
             <div class="modal-header">
@@ -323,13 +312,11 @@
         </div>
     </div>
 
-    <!-- Loading Spinner -->
     <div class="loading-spinner hidden" id="loadingSpinner">
         <div class="spinner"></div>
         <p>Carregando...</p>
     </div>
 
-    <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="app.js"></script>

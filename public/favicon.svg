@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Balão de conversa alinhado com o texto -->
+  <path d="M2 5c0-0.6 0.4-1 1-1h10c0.6 0 1 0.4 1 1v6c0 0.6-0.4 1-1 1H9l-2 3-2-3H3c-0.6 0-1-0.4-1-1V5z" 
+        fill="#ffd700"/>
+</svg> 

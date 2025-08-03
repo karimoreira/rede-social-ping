@@ -115,7 +115,7 @@ async function processImageData(imageData) {
             
 
             if (!fs.existsSync(filePath)) {
-                // Silenciosamente retorna null para arquivos inexistentes
+
                 return null
             }
             
@@ -134,7 +134,6 @@ async function processImageData(imageData) {
             
             const mimeType = mimeTypes[ext] || 'image/jpeg'
             
-
             const optimizedImage = await optimizeImage(fileBuffer, {
                 maxWidth: imageData.includes('avatar') ? 200 : 800,
                 maxHeight: imageData.includes('avatar') ? 200 : 800,
@@ -143,9 +142,6 @@ async function processImageData(imageData) {
             
             const base64Image = `data:${optimizedImage.mimeType};base64,${optimizedImage.buffer.toString('base64')}`
             
-
-            
-
             fs.unlinkSync(filePath)
 
             
