@@ -406,30 +406,36 @@ app.get('/api/posts', async (req, res) => {
             NULL as shared_by_avatar
         FROM posts p
         JOIN users u ON p.user_id = u.id
-        
-        UNION ALL
-        
-        SELECT 
-            p.*, 
-            u.username, 
-            u.full_name, 
-            u.avatar,
-            (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes_count,
-            (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comments_count,
-            1 as isShared,
-            'shared' as post_type,
-            s.created_at as sort_date,
-            s.user_id as shared_by_user_id,
-            (SELECT username FROM users WHERE id = s.user_id) as shared_by_username,
-            (SELECT full_name FROM users WHERE id = s.user_id) as shared_by_full_name,
-            (SELECT avatar FROM users WHERE id = s.user_id) as shared_by_avatar
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        JOIN shares s ON p.id = s.original_post_id
-        WHERE s.user_id = ?
     `
     
-    let params = [currentUserId]
+    let params = []
+    
+    // Adicionar reposts apenas se houver usuário logado
+    if (currentUserId) {
+        query += `
+            UNION ALL
+            
+            SELECT 
+                p.*, 
+                u.username, 
+                u.full_name, 
+                u.avatar,
+                (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comments_count,
+                1 as isShared,
+                'shared' as post_type,
+                s.created_at as sort_date,
+                s.user_id as shared_by_user_id,
+                (SELECT username FROM users WHERE id = s.user_id) as shared_by_username,
+                (SELECT full_name FROM users WHERE id = s.user_id) as shared_by_full_name,
+                (SELECT avatar FROM users WHERE id = s.user_id) as shared_by_avatar
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            JOIN shares s ON p.id = s.original_post_id
+            WHERE s.user_id = ?
+        `
+        params.push(currentUserId)
+    }
     
     if (userId) {
         query = `

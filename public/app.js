@@ -680,9 +680,26 @@ function createPostElement(post) {
     const isReposted = post.isShared || post.isShared === 1;
     
 
+    // Para reposts, mostrar informações do usuário que fez o repost
+    // Para posts originais, mostrar informações do autor original
     const displayUsername = isReposted && post.shared_by_username ? post.shared_by_username : post.username;
     const displayFullName = isReposted && post.shared_by_full_name ? post.shared_by_full_name : post.full_name;
-    const displayAvatar = isReposted && post.shared_by_avatar ? post.shared_by_avatar : post.avatar;
+    
+    // Para reposts, se não tiver avatar do usuário que fez o repost, usar o avatar do usuário atual
+    let displayAvatar;
+    if (isReposted) {
+        if (post.shared_by_avatar) {
+            displayAvatar = post.shared_by_avatar;
+        } else if (currentUser && currentUser.avatar) {
+            displayAvatar = currentUser.avatar;
+        } else {
+            displayAvatar = null; // Usar fallback
+        }
+    } else {
+        displayAvatar = post.avatar;
+    }
+    
+
     
 
     
@@ -1433,9 +1450,26 @@ function createUserResultHTML(user) {
 function createPostResultHTML(post) {
     const isReposted = post.isShared || post.isShared === 1
     
+    // Para reposts, mostrar informações do usuário que fez o repost
+    // Para posts originais, mostrar informações do autor original
     const displayUsername = isReposted && post.shared_by_username ? post.shared_by_username : post.username
     const displayFullName = isReposted && post.shared_by_full_name ? post.shared_by_full_name : post.full_name
-    const displayAvatar = isReposted && post.shared_by_avatar ? post.shared_by_avatar : post.avatar
+    
+    // Para reposts, se não tiver avatar do usuário que fez o repost, usar o avatar do usuário atual
+    let displayAvatar;
+    if (isReposted) {
+        if (post.shared_by_avatar) {
+            displayAvatar = post.shared_by_avatar;
+        } else if (currentUser && currentUser.avatar) {
+            displayAvatar = currentUser.avatar;
+        } else {
+            displayAvatar = null; // Usar fallback
+        }
+        
+
+    } else {
+        displayAvatar = post.avatar;
+    }
     
     const avatarHtml = displayAvatar 
         ? `<img src="${displayAvatar}" alt="Avatar" class="post-result-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -1492,7 +1526,21 @@ async function showPostDetails(postId) {
             
 
             const isReposted = post.isShared || post.isShared === 1;
-            const avatarUrl = isReposted && post.shared_by_avatar ? post.shared_by_avatar : (post.avatar || post.user_avatar || (post.user && post.user.avatar));
+            
+            // Se for um repost, usar o avatar do usuário que fez o repost
+            // Caso contrário, usar o avatar do autor original
+            let avatarUrl;
+            if (isReposted) {
+                if (post.shared_by_avatar) {
+                    avatarUrl = post.shared_by_avatar;
+                } else if (currentUser && currentUser.avatar) {
+                    avatarUrl = currentUser.avatar;
+                } else {
+                    avatarUrl = null; // Usar fallback
+                }
+            } else {
+                avatarUrl = post.avatar || post.user_avatar || (post.user && post.user.avatar);
+            }
             
             const avatarHtml = avatarUrl 
                 ? `<img src="${avatarUrl}" alt="Avatar" class="post-details-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">

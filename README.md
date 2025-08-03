@@ -22,7 +22,6 @@ backend: node.js + express
 banco: SQLite3
 frontend: javascript
 autenticação: bcryptjs, express-session 
-upload: multer
 
 # funcionalidades iniciais 
 autenticação, 
@@ -37,3 +36,6 @@ o arquivo social.db será criado automaticamente na primeira execução do proje
 
 # imagens migradas do /upload pós testes para o banco de dados
 agora armazeno as imagens diretamente no banco de dados SQLite como base64, mais simples, com backup, armazenamento seguro e sem depender de nada externo. para outros projetos maiores é melhor armazenar um S3 por exemplo e uma CDN de alta performance. neste projeto fiz uma otimização para as imagens com redimensionamento e conversão
+
+# reposts/avatares
+fallbacks e lógica para os reposts trazerem os avatares que quem reposta e não do usuário original
