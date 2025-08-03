@@ -1,0 +1,12 @@
+node_modules/
+*.db
+*.sqlite
+*.sqlite3
+social.db
+public/uploads/
+*.log
+.env
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/ 

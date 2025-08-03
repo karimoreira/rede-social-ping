@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-comments"></i>
+                <span>Ping</span>
+            </div>
+            
+            <nav class="nav-menu" id="navMenu">
+                <a href="#" class="nav-link active" data-section="feed">
+                    <i class="fas fa-home"></i>
+                    <span>Início</span>
+                </a>
+                <a href="#" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Perfil</span>
+                </a>
+                <a href="#" class="nav-link" data-section="explore">
+                    <i class="fas fa-compass"></i>
+                    <span>Explorar</span>
+                </a>
+            </nav>
+            
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">
+                    <img src="https://via.placeholder.com/40x40/d4af37/ffffff?text=U" alt="Avatar" id="avatarImg">
+                    <div class="avatar-fallback" id="avatarFallback">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="#" class="dropdown-item" id="profileLink">
+                        <i class="fas fa-user"></i>
+                        Meu Perfil
+                    </a>
+                    <hr>
+                    <a href="#" class="dropdown-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sair
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Auth Section -->
+        <section class="auth-section" id="authSection">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <h1>Bem-vindo ao Ping</h1>
+                        <p>Compartilhe suas ideias e experiências</p>
+                    </div>
+                    
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" data-tab="login">Entrar</button>
+                        <button class="tab-btn" data-tab="register">Cadastrar</button>
+                    </div>
+                    
+                    <!-- Login Form -->
+                    <form class="auth-form active" id="loginForm">
+                        <div class="form-group">
+                            <label for="loginUsername">Usuário ou Email</label>
+                            <input type="text" id="loginUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Senha</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                    </form>
+                    
+                    <!-- Register Form -->
+                    <form class="auth-form" id="registerForm">
+                        <div class="form-group">
+                            <label for="registerFullName">Nome Completo</label>
+                            <input type="text" id="registerFullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerUsername">Nome de Usuário</label>
+                            <input type="text" id="registerUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Senha</label>
+                            <input type="password" id="registerPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blog Section -->
+        <section class="blog-section hidden" id="blogSection">
+            <div class="blog-container">
+                <!-- Blog Header -->
+                <div class="blog-header">
+                    <h1 class="blog-title">ping feed</h1>
+                    <p class="blog-subtitle">compartilhe vivências e conhecimentos</p>
+                </div>
+
+                <!-- Create Post -->
+                <div class="create-post-card">
+                    <div class="post-input-container">
+                        <div class="post-avatar-container">
+                            <img src="https://via.placeholder.com/50x50/d4af37/ffffff?text=U" alt="Avatar" class="post-avatar" id="createPostAvatar">
+                            <div class="avatar-fallback" id="createPostAvatarFallback">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div class="post-input-wrapper">
+                            <textarea id="postContent" placeholder="O que você quer compartilhar hoje?" rows="4"></textarea>
+                            <div class="post-actions">
+                                <label for="postImage" class="file-input-label">
+                                    <i class="fas fa-image"></i>
+                                    Adicionar imagem
+                                </label>
+                                <input type="file" id="postImage" accept="image/*" hidden>
+                                <button type="button" class="btn btn-primary" id="createPostBtn">Publicar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img src="" alt="Preview" id="previewImg">
+                        <button type="button" class="remove-image" id="removeImage">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Posts Feed -->
+                <div class="posts-feed" id="postsFeed">
+                    <!-- Posts serão carregados dinamicamente -->
+                </div>
+
+                <!-- Load More -->
+                <div class="load-more-container">
+                    <button class="btn btn-outline" id="loadMoreBtn">Carregar mais posts</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section class="profile-section hidden" id="profileSection">
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-cover">
+                        <div class="profile-avatar-large">
+                            <img src="https://via.placeholder.com/120x120/d4af37/ffffff?text=U" alt="Avatar" id="profileAvatar">
+                            <div class="avatar-fallback" id="profileAvatarFallback">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <button class="edit-avatar-btn" id="editAvatarBtn">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-info-large">
+                        <h1 id="profileUserName">Nome do Usuário</h1>
+                        <p id="profileUserBio">Bio do usuário</p>
+                        <div class="profile-stats">
+                            <div class="stat">
+                                <span class="stat-number" id="profilePostsCount">0</span>
+                                <span class="stat-label">Posts</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="profileFollowersCount">0</span>
+                                <span class="stat-label">Seguidores</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="profileFollowingCount">0</span>
+                                <span class="stat-label">Seguindo</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" id="editProfileBtn">
+                            <i class="fas fa-edit"></i>
+                            Editar Perfil
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="profile-content">
+                    <div class="profile-posts" id="profilePosts">
+                        <!-- Posts do perfil serão carregados aqui -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Explore Section -->
+        <section class="explore-section hidden" id="exploreSection">
+            <div class="explore-container">
+                <div class="explore-header">
+                    <h1 class="explore-title">Explorar</h1>
+                </div>
+
+
+
+                <!-- Search Results -->
+                <div class="search-results" id="searchResults">
+                    <div class="no-search-message">
+                        <i class="fas fa-search"></i>
+                        <h3>Comece a explorar</h3>
+                        <p>Digite algo na barra de pesquisa para descobrir conteúdo interessante</p>
+                    </div>
+                </div>
+
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Título do Modal</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content" id="modalContent">
+                <!-- Conteúdo do modal será carregado dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div class="modal-overlay hidden" id="avatarModalOverlay">
+        <div class="modal" id="avatarModal">
+            <div class="modal-header">
+                <h3>Alterar Avatar</h3>
+                <button class="modal-close" id="avatarModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="avatar-upload-container">
+                    <div class="current-avatar">
+                        <img src="" alt="Avatar atual" id="currentAvatarImg">
+                        <p>Avatar atual</p>
+                    </div>
+                    
+                    <div class="avatar-upload-section">
+                        <label for="avatarUpload" class="avatar-upload-label">
+                            <i class="fas fa-camera"></i>
+                            <span>Escolher nova imagem</span>
+                        </label>
+                        <input type="file" id="avatarUpload" accept="image/*" hidden>
+                        
+                        <div class="avatar-preview" id="avatarPreview" style="display: none;">
+                            <img src="" alt="Preview" id="avatarPreviewImg">
+                            <button type="button" class="remove-avatar" id="removeAvatar">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="avatar-actions">
+                            <button type="button" class="btn btn-primary" id="saveAvatarBtn" disabled>
+                                Salvar Avatar
+                            </button>
+                            <button type="button" class="btn btn-danger" id="removeCurrentAvatarBtn" style="display: none;">
+                                Remover Avatar
+                            </button>
+                            <button type="button" class="btn btn-outline" id="cancelAvatarBtn">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal-overlay hidden" id="editProfileModalOverlay">
+        <div class="modal" id="editProfileModal">
+            <div class="modal-header">
+                <h3>Editar Perfil</h3>
+                <button class="modal-close" id="editProfileModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <form id="editProfileForm">
+                    <div class="form-group">
+                        <label for="editFullName">Nome Completo</label>
+                        <input type="text" id="editFullName" name="fullName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editBio">Bio</label>
+                        <textarea id="editBio" name="bio" rows="4" placeholder="Conte um pouco sobre você..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Salvar Alterações
+                        </button>
+                        <button type="button" class="btn btn-outline" id="cancelEditProfile">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner hidden" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html> 
