@@ -118,8 +118,6 @@ function setupEventListeners() {
     elements.loginForm.addEventListener('submit', handleLogin)
     elements.registerForm.addEventListener('submit', handleRegister)
     
-    elements.logoutBtn.addEventListener('click', handleLogout)
-    
     elements.createPostBtn.addEventListener('click', createPost)
     
     elements.loadMoreBtn.addEventListener('click', loadMorePosts)
